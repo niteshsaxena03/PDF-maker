@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -12,30 +12,32 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import * as ImagePicker from 'expo-image-picker';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system/legacy';
-import * as MediaLibrary from 'expo-media-library';
+} from "react-native";
+import { StatusBar } from "expo-status-bar";
+import * as ImagePicker from "expo-image-picker";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
+import * as FileSystem from "expo-file-system/legacy";
+import * as MediaLibrary from "expo-media-library";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export default function App() {
   const [selectedImages, setSelectedImages] = useState([]);
-  const [pdfName, setPdfName] = useState('');
+  const [pdfName, setPdfName] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
   const requestPermissions = async () => {
-    const { status: imageStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
-    
-    if (imageStatus !== 'granted' || mediaStatus !== 'granted') {
+    const { status: imageStatus } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status: mediaStatus } =
+      await MediaLibrary.requestPermissionsAsync();
+
+    if (imageStatus !== "granted" || mediaStatus !== "granted") {
       Alert.alert(
-        '🔒 Permissions Required',
-        'Please grant permissions to access photos and save files.',
-        [{ text: 'OK' }]
+        "🔒 Permissions Required",
+        "Please grant permissions to access photos and save files.",
+        [{ text: "OK" }]
       );
       return false;
     }
@@ -48,7 +50,7 @@ export default function App() {
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ["images"],
         allowsMultipleSelection: true,
         quality: 0.7,
       });
@@ -58,8 +60,8 @@ export default function App() {
         setSelectedImages([...selectedImages, ...result.assets]);
       }
     } catch (error) {
-      console.error('Image picker error:', error);
-      Alert.alert('❌ Error', 'Failed to pick images: ' + error.message);
+      console.error("Image picker error:", error);
+      Alert.alert("❌ Error", "Failed to pick images: " + error.message);
     }
   };
 
@@ -68,28 +70,24 @@ export default function App() {
   };
 
   const clearAll = () => {
-    Alert.alert(
-      '🗑️ Clear All',
-      'Remove all selected images?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear', 
-          style: 'destructive',
-          onPress: () => setSelectedImages([])
-        }
-      ]
-    );
+    Alert.alert("🗑️ Clear All", "Remove all selected images?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Clear",
+        style: "destructive",
+        onPress: () => setSelectedImages([]),
+      },
+    ]);
   };
 
   const generatePDF = async () => {
     if (selectedImages.length === 0) {
-      Alert.alert('📷 No Images', 'Please select at least one image.');
+      Alert.alert("📷 No Images", "Please select at least one image.");
       return;
     }
 
     if (!pdfName.trim()) {
-      Alert.alert('✏️ PDF Name Required', 'Please enter a name for your PDF.');
+      Alert.alert("✏️ PDF Name Required", "Please enter a name for your PDF.");
       return;
     }
 
@@ -100,12 +98,12 @@ export default function App() {
       for (let i = 0; i < selectedImages.length; i++) {
         const img = selectedImages[i];
         console.log(`Processing image ${i + 1}: ${img.uri}`);
-        
+
         try {
           const base64 = await FileSystem.readAsStringAsync(img.uri, {
             encoding: FileSystem.EncodingType.Base64,
           });
-          
+
           if (base64 && base64.length > 0) {
             images.push(base64);
             console.log(`Image ${i + 1} converted, size: ${base64.length}`);
@@ -114,23 +112,29 @@ export default function App() {
           }
         } catch (err) {
           console.error(`Failed to read image ${i + 1}:`, err.message);
-          Alert.alert('❌ Error', `Could not read image ${i + 1}. It may be stored in iCloud. Please download it first.`);
+          Alert.alert(
+            "❌ Error",
+            `Could not read image ${i + 1}. It may be stored in iCloud. Please download it first.`
+          );
           setIsGenerating(false);
           return;
         }
       }
 
       if (images.length === 0) {
-        Alert.alert('❌ Error', 'No images could be processed.');
+        Alert.alert("❌ Error", "No images could be processed.");
         setIsGenerating(false);
         return;
       }
 
       console.log(`Creating PDF with ${images.length} images`);
 
-      const imagesHtml = images.map((base64, index) => 
-        `<img src="data:image/jpeg;base64,${base64}" style="width:100%;display:block;"/>`
-      ).join('');
+      const imagesHtml = images
+        .map(
+          (base64, index) =>
+            `<img src="data:image/jpeg;base64,${base64}" style="width:100%;display:block;"/>`
+        )
+        .join("");
 
       const html = `
 <!DOCTYPE html>
@@ -145,17 +149,16 @@ export default function App() {
 <body>${imagesHtml}</body>
 </html>`;
 
-      console.log('Generating PDF...');
-      
+      console.log("Generating PDF...");
+
       const { uri } = await Print.printToFileAsync({ html });
 
-      console.log('PDF generated at:', uri);
+      console.log("PDF generated at:", uri);
 
       await savePDF(uri);
-
     } catch (error) {
-      console.error('PDF generation error:', error);
-      Alert.alert('❌ Error', 'Failed to generate PDF: ' + error.message);
+      console.error("PDF generation error:", error);
+      Alert.alert("❌ Error", "Failed to generate PDF: " + error.message);
     } finally {
       setIsGenerating(false);
     }
@@ -164,21 +167,21 @@ export default function App() {
   const savePDF = async (uri) => {
     try {
       const fileName = `${pdfName.trim()}.pdf`;
-      
-      if (Platform.OS === 'android') {
+
+      if (Platform.OS === "android") {
         const permission = await MediaLibrary.requestPermissionsAsync();
         if (permission.granted) {
           const asset = await MediaLibrary.createAssetAsync(uri);
-          await MediaLibrary.createAlbumAsync('Download', asset, false);
+          await MediaLibrary.createAlbumAsync("Download", asset, false);
           Alert.alert(
-            '✅ Success!',
+            "✅ Success!",
             `PDF "${fileName}" saved to Downloads folder.`,
             [
               {
-                text: 'OK',
+                text: "OK",
                 onPress: () => {
                   setSelectedImages([]);
-                  setPdfName('');
+                  setPdfName("");
                 },
               },
             ]
@@ -190,18 +193,18 @@ export default function App() {
         if (await Sharing.isAvailableAsync()) {
           await Sharing.shareAsync(newUri);
           setSelectedImages([]);
-          setPdfName('');
+          setPdfName("");
         }
       }
     } catch (error) {
-      Alert.alert('❌ Save Error', error.message);
+      Alert.alert("❌ Save Error", error.message);
     }
   };
 
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      
+
       {/* Header with Gradient Effect */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
@@ -213,8 +216,8 @@ export default function App() {
         </View>
       </View>
 
-      <ScrollView 
-        style={styles.content} 
+      <ScrollView
+        style={styles.content}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
@@ -287,7 +290,7 @@ export default function App() {
             <Text style={styles.emptyIcon}>📸</Text>
             <Text style={styles.emptyTitle}>No Images Yet</Text>
             <Text style={styles.emptyText}>
-              Tap the button below to select images{'\n'}from your gallery
+              Tap the button below to select images{"\n"}from your gallery
             </Text>
           </View>
         )}
@@ -320,10 +323,13 @@ export default function App() {
           style={[
             styles.button,
             styles.generateButton,
-            (selectedImages.length === 0 || !pdfName.trim() || isGenerating) && styles.buttonDisabled,
+            (selectedImages.length === 0 || !pdfName.trim() || isGenerating) &&
+              styles.buttonDisabled,
           ]}
           onPress={generatePDF}
-          disabled={selectedImages.length === 0 || !pdfName.trim() || isGenerating}
+          disabled={
+            selectedImages.length === 0 || !pdfName.trim() || isGenerating
+          }
           activeOpacity={0.8}
         >
           {isGenerating ? (
@@ -338,6 +344,11 @@ export default function App() {
             </>
           )}
         </TouchableOpacity>
+
+        {/* Made By Credit */}
+        <View style={styles.creditContainer}>
+          <Text style={styles.creditText}>Made by Nitesh Saxena</Text>
+        </View>
       </View>
     </View>
   );
@@ -346,22 +357,22 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   header: {
-    backgroundColor: '#1e3a8a',
-    paddingTop: Platform.OS === 'ios' ? 60 : 50,
+    backgroundColor: "#1e3a8a",
+    paddingTop: Platform.OS === "ios" ? 60 : 50,
     paddingBottom: 25,
     paddingHorizontal: 20,
-    shadowColor: '#1e3a8a',
+    shadowColor: "#1e3a8a",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
   headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   titleEmoji: {
     fontSize: 50,
@@ -369,13 +380,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
     marginBottom: 2,
   },
   subtitle: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
+    color: "rgba(255,255,255,0.9)",
   },
   content: {
     flex: 1,
@@ -385,19 +396,19 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
   },
   cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   cardIcon: {
@@ -406,59 +417,59 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
+    fontWeight: "600",
+    color: "#1f2937",
   },
   input: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
     borderWidth: 2,
-    borderColor: '#e5e7eb',
+    borderColor: "#e5e7eb",
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#1f2937',
+    color: "#1f2937",
   },
   charCount: {
-    textAlign: 'right',
+    textAlign: "right",
     fontSize: 12,
-    color: '#9ca3af',
+    color: "#9ca3af",
     marginTop: 8,
   },
   statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   statItem: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   statNumber: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1e40af',
+    fontWeight: "bold",
+    color: "#1e40af",
   },
   statLabel: {
     fontSize: 14,
-    color: '#6b7280',
+    color: "#6b7280",
     marginTop: 4,
   },
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: "#e5e7eb",
   },
   clearButton: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   clearButtonText: {
     fontSize: 14,
-    color: '#ef4444',
-    fontWeight: '600',
+    color: "#ef4444",
+    fontWeight: "600",
   },
   imageGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginHorizontal: -6,
     marginTop: 8,
   },
@@ -467,56 +478,56 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     margin: 6,
     borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#f3f4f6',
-    position: 'relative',
+    overflow: "hidden",
+    backgroundColor: "#f3f4f6",
+    position: "relative",
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   removeButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 6,
     right: 6,
-    backgroundColor: '#ef4444',
+    backgroundColor: "#ef4444",
     width: 28,
     height: 28,
     borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
   },
   removeButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   imageBadge: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 6,
     left: 6,
-    backgroundColor: 'rgba(0,0,0,0.75)',
+    backgroundColor: "rgba(0,0,0,0.75)",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
   },
   imageBadgeText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   emptyCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 40,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -528,68 +539,68 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#1f2937',
+    fontWeight: "600",
+    color: "#1f2937",
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 15,
-    color: '#6b7280',
-    textAlign: 'center',
+    color: "#6b7280",
+    textAlign: "center",
     lineHeight: 22,
   },
   tipsCard: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: "#fef3c7",
     borderRadius: 16,
     padding: 20,
     borderWidth: 2,
-    borderColor: '#fbbf24',
+    borderColor: "#fbbf24",
   },
   tipsTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#92400e',
+    fontWeight: "600",
+    color: "#92400e",
     marginBottom: 12,
   },
   tipText: {
     fontSize: 14,
-    color: '#78350f',
+    color: "#78350f",
     marginBottom: 6,
     lineHeight: 20,
   },
   footer: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 16,
+    paddingBottom: Platform.OS === "ios" ? 30 : 16,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    shadowColor: '#000',
+    borderTopColor: "#e5e7eb",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 10,
   },
   button: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 18,
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 4,
   },
   selectButton: {
-    backgroundColor: '#1e40af',
+    backgroundColor: "#1e40af",
   },
   generateButton: {
-    backgroundColor: '#dc2626',
+    backgroundColor: "#dc2626",
   },
   buttonDisabled: {
-    backgroundColor: '#d1d5db',
+    backgroundColor: "#d1d5db",
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -598,13 +609,22 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
+  },
+  creditContainer: {
+    alignItems: "center",
+    marginTop: 8,
+  },
+  creditText: {
+    fontSize: 13,
+    color: "#6b7280",
+    fontWeight: "500",
   },
 });

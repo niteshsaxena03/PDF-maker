@@ -28,6 +28,8 @@
       }
     },
     "android": {
+      "package": "com.nitesh03.pdfmaker",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
