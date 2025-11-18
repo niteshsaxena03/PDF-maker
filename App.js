@@ -106,14 +106,23 @@ export default function App() {
 
       console.log(`Creating PDF with ${images.length} images`);
 
-      // Create simple HTML
+      // Create HTML with images flowing continuously without page breaks
       const imagesHtml = images.map((base64, index) => 
-        `<div style="page-break-after:always;text-align:center;padding:20px;">
-          <img src="data:image/jpeg;base64,${base64}" style="max-width:100%;max-height:90vh;"/>
-        </div>`
+        `<img src="data:image/jpeg;base64,${base64}" style="width:100%;display:block;"/>`
       ).join('');
 
-      const html = `<html><body>${imagesHtml}</body></html>`;
+      const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { margin: 0; padding: 0; }
+    img { width: 100%; display: block; }
+  </style>
+</head>
+<body>${imagesHtml}</body>
+</html>`;
 
       console.log('Generating PDF...');
       
