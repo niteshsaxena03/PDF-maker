@@ -13,6 +13,13 @@
         {
           "photosPermission": "Allow PDF-maker to access your photos to select images for PDF creation."
         }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow PDF-maker to access your photo library.",
+          "savePhotosPermission": "Allow PDF-maker to save PDFs to your device."
+        }
       ]
     ],
     "splash": {
@@ -36,13 +43,22 @@
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "READ_MEDIA_IMAGES"
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.ACCESS_MEDIA_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5dc1a562-62af-4a4d-aa60-6e32dd8f97cf"
+      }
     }
   }
 }

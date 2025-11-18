@@ -30,13 +30,11 @@ export default function App() {
   const requestPermissions = async () => {
     const { status: imageStatus } =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
-    const { status: mediaStatus } =
-      await MediaLibrary.requestPermissionsAsync();
 
-    if (imageStatus !== "granted" || mediaStatus !== "granted") {
+    if (imageStatus !== "granted") {
       Alert.alert(
         "🔒 Permissions Required",
-        "Please grant permissions to access photos and save files.",
+        "Please grant permissions to access photos.",
         [{ text: "OK" }]
       );
       return false;
@@ -45,23 +43,44 @@ export default function App() {
   };
 
   const pickImages = async () => {
-    const hasPermission = await requestPermissions();
-    if (!hasPermission) return;
-
     try {
+      console.log("Requesting permissions...");
+      const hasPermission = await requestPermissions();
+
+      if (!hasPermission) {
+        console.log("Permissions denied");
+        Alert.alert(
+          "⚠️ Permissions Needed",
+          "Please go to Settings → Apps → PDF-maker → Permissions and enable Storage/Photos access.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+
+      console.log("Permissions granted, opening image picker...");
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         allowsMultipleSelection: true,
         quality: 0.7,
+        allowsEditing: false,
       });
+
+      console.log("Image picker result:", result);
 
       if (!result.canceled && result.assets) {
         console.log(`Selected ${result.assets.length} images`);
         setSelectedImages([...selectedImages, ...result.assets]);
+        Alert.alert("✅ Success", `${result.assets.length} images selected!`);
+      } else {
+        console.log("User cancelled image picker");
       }
     } catch (error) {
       console.error("Image picker error:", error);
-      Alert.alert("❌ Error", "Failed to pick images: " + error.message);
+      Alert.alert(
+        "❌ Error",
+        `Failed to pick images: ${error.message}\n\nTry restarting the app or check permissions in Settings.`
+      );
     }
   };
 
@@ -167,36 +186,50 @@ export default function App() {
   const savePDF = async (uri) => {
     try {
       const fileName = `${pdfName.trim()}.pdf`;
+      const newUri = `${FileSystem.documentDirectory}${fileName}`;
 
-      if (Platform.OS === "android") {
-        const permission = await MediaLibrary.requestPermissionsAsync();
-        if (permission.granted) {
-          const asset = await MediaLibrary.createAssetAsync(uri);
-          await MediaLibrary.createAlbumAsync("Download", asset, false);
-          Alert.alert(
-            "✅ Success!",
-            `PDF "${fileName}" saved to Downloads folder.`,
-            [
-              {
-                text: "OK",
-                onPress: () => {
-                  setSelectedImages([]);
-                  setPdfName("");
-                },
+      // Move/copy the file to a permanent location
+      await FileSystem.copyAsync({
+        from: uri,
+        to: newUri,
+      });
+
+      console.log("PDF saved to:", newUri);
+
+      // Use sharing for both platforms - works everywhere!
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(newUri, {
+          mimeType: "application/pdf",
+          dialogTitle: "Save PDF",
+          UTI: "com.adobe.pdf",
+        });
+
+        Alert.alert(
+          "✅ Success!",
+          `PDF "${fileName}" created! You can now save it to your device.`,
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                setSelectedImages([]);
+                setPdfName("");
               },
-            ]
-          );
-        }
+            },
+          ]
+        );
       } else {
-        const newUri = `${FileSystem.documentDirectory}${fileName}`;
-        await FileSystem.moveAsync({ from: uri, to: newUri });
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(newUri);
-          setSelectedImages([]);
-          setPdfName("");
-        }
+        Alert.alert("✅ PDF Created!", `PDF saved as: ${fileName}`, [
+          {
+            text: "OK",
+            onPress: () => {
+              setSelectedImages([]);
+              setPdfName("");
+            },
+          },
+        ]);
       }
     } catch (error) {
+      console.error("Save error:", error);
       Alert.alert("❌ Save Error", error.message);
     }
   };
